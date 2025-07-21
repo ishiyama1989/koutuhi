@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通勤費計算システム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>通勤費計算システム</h1>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="showTab('people', this)">人の登録</button>
+            <button class="tab-btn" onclick="showTab('patterns', this)">勤務パターン</button>
+            <button class="tab-btn" onclick="showTab('excel', this)">エクセル取込</button>
+            <button class="tab-btn" onclick="showTab('summary', this)">月次集計</button>
+            <button class="tab-btn" onclick="showTab('settings', this)">設定</button>
+        </nav>
+
+        <!-- 人の登録タブ -->
+        <div id="people" class="tab-content active">
+            <h2>人の登録</h2>
+            <form id="personForm">
+                <div class="form-group">
+                    <label for="personName">氏名:</label>
+                    <input type="text" id="personName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="jobTypes">所属:</label>
+                    <div class="job-types-selection">
+                        <label><input type="checkbox" value="乗務員区" class="job-type-checkbox"> 乗務員区</label>
+                        <label><input type="checkbox" value="管理駅" class="job-type-checkbox"> 管理駅</label>
+                        <label><input type="checkbox" value="運転指令" class="job-type-checkbox"> 運転指令</label>
+                        <label><input type="checkbox" value="技術所" class="job-type-checkbox"> 技術所</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nearestStation">最寄駅:</label>
+                    <select id="nearestStation" required>
+                        <option value="">選択してください</option>
+                        <option value="大月駅">大月駅</option>
+                        <option value="上大月駅">上大月駅</option>
+                        <option value="田野倉駅">田野倉駅</option>
+                        <option value="禾生駅">禾生駅</option>
+                        <option value="赤坂駅">赤坂駅</option>
+                        <option value="都留市駅">都留市駅</option>
+                        <option value="谷村町駅">谷村町駅</option>
+                        <option value="都留文科大学前駅">都留文科大学前駅</option>
+                        <option value="十日市場駅">十日市場駅</option>
+                        <option value="東桂駅">東桂駅</option>
+                        <option value="三つ峠駅">三つ峠駅</option>
+                        <option value="寿駅">寿駅</option>
+                        <option value="葭池温泉前駅">葭池温泉前駅</option>
+                        <option value="下吉田駅">下吉田駅</option>
+                        <option value="月江寺駅">月江寺駅</option>
+                        <option value="富士山駅">富士山駅</option>
+                        <option value="富士急ハイランド駅">富士急ハイランド駅</option>
+                        <option value="河口湖駅">河口湖駅</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="nearestStationDistanceGroup" style="display: none;">
+                    <label for="nearestStationDistance">最寄駅までの距離 (km):</label>
+                    <input type="number" id="nearestStationDistance" step="0.1" min="0" max="50" placeholder="例: 2.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="hasPrivateCar">自家用車の有無:</label>
+                    <select id="hasPrivateCar" required>
+                        <option value="">選択してください</option>
+                        <option value="yes">自家用車あり</option>
+                        <option value="no">自家用車なし</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="distanceGroup" style="display: none;">
+                    <label>自宅から各駅までの距離 (km):</label>
+                    <div class="distance-inputs">
+                        <div class="distance-input-item">
+                            <label for="distanceOtsuki">大月駅:</label>
+                            <input type="number" id="distanceOtsuki" step="0.1" min="0" max="50">
+                        </div>
+                        <div class="distance-input-item">
+                            <label for="distanceTsuru">都留文科大学前駅:</label>
+                            <input type="number" id="distanceTsuru" step="0.1" min="0" max="50">
+                        </div>
+                        <div class="distance-input-item">
+                            <label for="distanceShimoyoshida">下吉田駅:</label>
+                            <input type="number" id="distanceShimoyoshida" step="0.1" min="0" max="50">
+                        </div>
+                        <div class="distance-input-item">
+                            <label for="distanceFujisan">富士山駅:</label>
+                            <input type="number" id="distanceFujisan" step="0.1" min="0" max="50">
+                        </div>
+                        <div class="distance-input-item">
+                            <label for="distanceHighland">ハイランド駅:</label>
+                            <input type="number" id="distanceHighland" step="0.1" min="0" max="50">
+                        </div>
+                        <div class="distance-input-item">
+                            <label for="distanceKawaguchiko">河口湖駅:</label>
+                            <input type="number" id="distanceKawaguchiko" step="0.1" min="0" max="50">
+                        </div>
+                        <div class="distance-input-item">
+                            <label for="distanceRailwayTech">鉄道技術所:</label>
+                            <input type="number" id="distanceRailwayTech" step="0.1" min="0" max="50">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit">登録</button>
+            </form>
+
+            <div class="people-list">
+                <h3>登録済みの人</h3>
+                <div id="peopleList"></div>
+            </div>
+
+            <!-- 人の編集モーダル -->
+            <div id="editPersonModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>人の情報を編集</h3>
+                        <button class="close-btn" onclick="closeEditPersonModal()">&times;</button>
+                    </div>
+                    <form id="editPersonForm">
+                        <div class="form-group">
+                            <label for="editPersonName">氏名:</label>
+                            <input type="text" id="editPersonName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editJobTypes">所属:</label>
+                            <div class="job-types-selection">
+                                <label><input type="checkbox" value="乗務員区" class="edit-job-type-checkbox"> 乗務員区</label>
+                                <label><input type="checkbox" value="管理駅" class="edit-job-type-checkbox"> 管理駅</label>
+                                <label><input type="checkbox" value="運転指令" class="edit-job-type-checkbox"> 運転指令</label>
+                                <label><input type="checkbox" value="技術所" class="edit-job-type-checkbox"> 技術所</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editNearestStation">最寄駅:</label>
+                            <select id="editNearestStation" required>
+                                <option value="">選択してください</option>
+                                <option value="大月駅">大月駅</option>
+                                <option value="上大月駅">上大月駅</option>
+                                <option value="田野倉駅">田野倉駅</option>
+                                <option value="禾生駅">禾生駅</option>
+                                <option value="赤坂駅">赤坂駅</option>
+                                <option value="都留市駅">都留市駅</option>
+                                <option value="谷村町駅">谷村町駅</option>
+                                <option value="都留文科大学前駅">都留文科大学前駅</option>
+                                <option value="十日市場駅">十日市場駅</option>
+                                <option value="東桂駅">東桂駅</option>
+                                <option value="三つ峠駅">三つ峠駅</option>
+                                <option value="寿駅">寿駅</option>
+                                <option value="葭池温泉前駅">葭池温泉前駅</option>
+                                <option value="下吉田駅">下吉田駅</option>
+                                <option value="月江寺駅">月江寺駅</option>
+                                <option value="富士山駅">富士山駅</option>
+                                <option value="富士急ハイランド駅">富士急ハイランド駅</option>
+                                <option value="河口湖駅">河口湖駅</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="editNearestStationDistanceGroup" style="display: none;">
+                            <label for="editNearestStationDistance">最寄駅までの距離 (km):</label>
+                            <input type="number" id="editNearestStationDistance" step="0.1" min="0" max="50" placeholder="例: 2.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editHasPrivateCar">自家用車の有無:</label>
+                            <select id="editHasPrivateCar" required>
+                                <option value="">選択してください</option>
+                                <option value="yes">自家用車あり</option>
+                                <option value="no">自家用車なし</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="editDistanceGroup" style="display: none;">
+                            <label>自宅から各駅までの距離 (km):</label>
+                            <div class="distance-inputs">
+                                <div class="distance-input-item">
+                                    <label for="editDistanceOtsuki">大月駅:</label>
+                                    <input type="number" id="editDistanceOtsuki" step="0.1" min="0" max="50">
+                                </div>
+                                <div class="distance-input-item">
+                                    <label for="editDistanceTsuru">都留文科大学前駅:</label>
+                                    <input type="number" id="editDistanceTsuru" step="0.1" min="0" max="50">
+                                </div>
+                                <div class="distance-input-item">
+                                    <label for="editDistanceShimoyoshida">下吉田駅:</label>
+                                    <input type="number" id="editDistanceShimoyoshida" step="0.1" min="0" max="50">
+                                </div>
+                                <div class="distance-input-item">
+                                    <label for="editDistanceFujisan">富士山駅:</label>
+                                    <input type="number" id="editDistanceFujisan" step="0.1" min="0" max="50">
+                                </div>
+                                <div class="distance-input-item">
+                                    <label for="editDistanceHighland">ハイランド駅:</label>
+                                    <input type="number" id="editDistanceHighland" step="0.1" min="0" max="50">
+                                </div>
+                                <div class="distance-input-item">
+                                    <label for="editDistanceKawaguchiko">河口湖駅:</label>
+                                    <input type="number" id="editDistanceKawaguchiko" step="0.1" min="0" max="50">
+                                </div>
+                                <div class="distance-input-item">
+                                    <label for="editDistanceRailwayTech">鉄道技術所:</label>
+                                    <input type="number" id="editDistanceRailwayTech" step="0.1" min="0" max="50">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button type="submit" class="save-btn">保存</button>
+                            <button type="button" class="cancel-btn" onclick="closeEditPersonModal()">キャンセル</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 勤務パターンタブ -->
+        <div id="patterns" class="tab-content">
+            <h2>勤務パターン管理</h2>
+            
+            <div class="pattern-registration-section">
+                <h3>新しい勤務パターンの登録</h3>
+                <form id="patternForm">
+                    <div class="form-group">
+                        <label for="patternName">勤務名:</label>
+                        <input type="text" id="patternName" required placeholder="例: 日勤、夜勤、早番">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workLocation">出勤場所:</label>
+                        <select id="workLocation" required>
+                            <option value="">選択してください</option>
+                            <option value="なし">なし</option>
+                            <option value="大月駅">大月駅</option>
+                            <option value="都留文科大学前駅">都留文科大学前駅</option>
+                            <option value="下吉田駅">下吉田駅</option>
+                            <option value="富士山駅">富士山駅</option>
+                            <option value="ハイランド駅">ハイランド駅</option>
+                            <option value="河口湖駅">河口湖駅</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trainCommute">電車通勤:</label>
+                        <select id="trainCommute" required>
+                            <option value="">選択してください</option>
+                            <option value="none">なし</option>
+                            <option value="possible">可能</option>
+                            <option value="impossible">不可</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tripType">通勤費:</label>
+                        <select id="tripType" required>
+                            <option value="">選択してください</option>
+                            <option value="roundtrip">往復</option>
+                            <option value="oneway">片道</option>
+                            <option value="none">なし</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit">パターン登録</button>
+                </form>
+            </div>
+
+            <div class="patterns-list">
+                <h3>登録済み勤務パターン</h3>
+                <div id="patternsList"></div>
+            </div>
+
+            <!-- 勤務パターン編集モーダル -->
+            <div id="editPatternModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>勤務パターンを編集</h3>
+                        <button class="close-btn" onclick="closeEditPatternModal()">&times;</button>
+                    </div>
+                    <form id="editPatternForm">
+                        <div class="form-group">
+                            <label for="editPatternName">勤務名:</label>
+                            <input type="text" id="editPatternName" required placeholder="例: 日勤、夜勤、早番">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editWorkLocation">出勤場所:</label>
+                            <select id="editWorkLocation" required>
+                                <option value="">選択してください</option>
+                                <option value="なし">なし</option>
+                                <option value="大月駅">大月駅</option>
+                                <option value="都留文科大学前駅">都留文科大学前駅</option>
+                                <option value="下吉田駅">下吉田駅</option>
+                                <option value="富士山駅">富士山駅</option>
+                                <option value="ハイランド駅">ハイランド駅</option>
+                                <option value="河口湖駅">河口湖駅</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editTrainCommute">電車通勤:</label>
+                            <select id="editTrainCommute" required>
+                                <option value="">選択してください</option>
+                                <option value="none">なし</option>
+                                <option value="possible">可能</option>
+                                <option value="impossible">不可</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editTripType">通勤費:</label>
+                            <select id="editTripType" required>
+                                <option value="">選択してください</option>
+                                <option value="roundtrip">往復</option>
+                                <option value="oneway">片道</option>
+                                <option value="none">なし</option>
+                            </select>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button type="submit" class="save-btn">保存</button>
+                            <button type="button" class="cancel-btn" onclick="closeEditPatternModal()">キャンセル</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- エクセル取込タブ -->
+        <div id="excel" class="tab-content">
+            <h2>エクセル勤務表取込</h2>
+            
+            <div class="excel-import-section">
+                <h3>1. エクセルファイルの選択</h3>
+                <div class="form-group">
+                    <label for="excelFile">勤務表ファイル (.xlsx, .xls):</label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="sheetName">シート名:</label>
+                    <select id="sheetName">
+                        <option value="">ファイルを選択してください</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="excel-mapping-section" id="mappingSection" style="display: none;">
+                <h3>2. データの対応付け</h3>
+                <div class="mapping-grid">
+                    <div class="mapping-item">
+                        <label for="nameColumn">氏名列:</label>
+                        <select id="nameColumn">
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+                    <div class="mapping-item">
+                        <label for="dateStartColumn">日付開始列:</label>
+                        <select id="dateStartColumn">
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+                    <div class="mapping-item">
+                        <label for="dateEndColumn">日付終了列:</label>
+                        <select id="dateEndColumn">
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+                    <div class="mapping-item">
+                        <label for="startRow">データ開始行:</label>
+                        <input type="number" id="startRow" min="1" value="2" />
+                    </div>
+                </div>
+                
+                <button onclick="previewExcelData()" class="preview-btn">プレビュー</button>
+            </div>
+
+            <div class="excel-preview-section" id="previewSection" style="display: none;">
+                <h3>3. データプレビュー・名前選別</h3>
+                <div class="preview-controls">
+                    <button onclick="toggleNameSelection()" class="name-select-btn">名前選別モード</button>
+                    <button onclick="saveNameSelections()" class="save-names-btn" style="display: none;">選別結果を保存</button>
+                    <button onclick="resetNameSelections()" class="reset-names-btn" style="display: none;">選別リセット</button>
+                </div>
+                <div id="previewData"></div>
+                <div class="preview-actions">
+                    <button onclick="analyzeWorkPatterns()" class="analyze-btn">勤務パターン分析</button>
+                    <button onclick="bulkAnalyzeRegistered()" class="bulk-analyze-btn">登録済み一括分析</button>
+                    <button onclick="matchWithPatterns()" class="pattern-match-btn">パターン照合</button>
+                    <button onclick="importExcelData()" class="import-btn">取込実行</button>
+                    <button onclick="clearPreview()" class="clear-btn">クリア</button>
+                </div>
+            </div>
+
+            <div class="pattern-matching-section" id="patternMatchingSection" style="display: none;">
+                <h3>5. パターン照合結果</h3>
+                <div class="pattern-match-summary" id="patternMatchSummary"></div>
+                <div id="patternMatchData"></div>
+                <div class="pattern-match-actions">
+                    <button onclick="generatePatternRecords()" class="generate-btn">パターン適用で記録生成</button>
+                    <button onclick="exportPatternAnalysis()" class="export-btn">照合結果出力</button>
+                    <button onclick="exportSummaryCSV()" class="export-btn">通勤費集計エクスポート</button>
+                </div>
+            </div>
+
+            <div class="bulk-analysis-section" id="bulkAnalysisSection" style="display: none;">
+                <h3>6. 登録済み人員一括分析</h3>
+                <div class="bulk-summary" id="bulkSummary"></div>
+                <div id="bulkAnalysisData"></div>
+            </div>
+        </div>
+
+        <!-- 月次集計タブ -->
+        <div id="summary" class="tab-content">
+            <h2>月次集計</h2>
+            <div class="form-group">
+                <label for="summaryMonth">集計月:</label>
+                <input type="month" id="summaryMonth">
+                <button onclick="generateSummary()">集計表示</button>
+            </div>
+            
+            <div id="summaryResult">
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">出勤日数:</span>
+                        <span id="totalDays">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">総距離:</span>
+                        <span id="totalDistance">-</span> km
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">総通勤費:</span>
+                        <span id="totalAmount">-</span> 円
+                    </div>
+                </div>
+                
+                <button onclick="exportCSV()" id="exportBtn" style="display: none;">CSV出力</button>
+                
+                <div id="summaryDetails"></div>
+            </div>
+        </div>
+
+        <!-- 設定タブ -->
+        <div id="settings" class="tab-content">
+            <h2>設定</h2>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="unitRate">通勤費単価 (円/km):</label>
+                    <input type="number" id="unitRate" step="0.1" min="0" value="10">
+                </div>
+                
+                <button type="submit">設定保存</button>
+            </form>
+
+            <div class="data-management">
+                <h3>データ管理</h3>
+                <button onclick="exportData()">データ出力</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <button onclick="document.getElementById('importFile').click()">データ読込</button>
+                <button onclick="clearAllData()" class="danger">全データ削除</button>
+                <button onclick="debugShowData()">データ確認</button>
+            </div>
+            
+            <div id="debugDataDisplay" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;">
+                <h4>保存データ確認</h4>
+                <div id="debugContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        // 通勤費集計エクスポート関数（フォールバック付き）
+        function exportSummaryCSV() {
+            try {
+                if (typeof app !== 'undefined' && app.exportTransportationSummaryToExcel) {
+                    app.exportTransportationSummaryToExcel();
+                } else if (typeof app !== 'undefined' && app.previewData && app.previewData.length > 0) {
+                    // データが存在する場合の簡易集計
+                    const personStats = {};
+                    app.previewData.forEach(item => {
+                        if (!personStats[item.name]) {
+                            personStats[item.name] = { totalCost: 0, workDays: 0 };
+                        }
+                        personStats[item.name].workDays++;
+                        if (item.status === 'OK' && item.person) {
+                            // 基本的な通勤費計算（往復10円/km）
+                            const unitRate = app.data?.settings?.unitRate || 10;
+                            if (item.person.nearestStationDistance) {
+                                personStats[item.name].totalCost += item.person.nearestStationDistance * 2 * unitRate;
+                            }
+                        }
+                    });
+                    
+                    // CSV出力
+                    let csvContent = '名前,合計通勤費(円),出勤日数\n';
+                    Object.entries(personStats).forEach(([name, stats]) => {
+                        csvContent += `${name},${stats.totalCost},${stats.workDays}\n`;
+                    });
+                    
+                    const bom = '\uFEFF';
+                    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `通勤費集計_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                    
+                    alert('通勤費集計をエクスポートしました');
+                } else {
+                    alert('エクスポートするデータがありません。エクセルファイルを読み込んでから実行してください。');
+                }
+            } catch (error) {
+                console.error('エクスポートエラー:', error);
+                alert('エクスポート中にエラーが発生しました: ' + error.message);
+            }
+        }
+
+        // デバッグ用データ表示関数
+        function debugShowData() {
+            const debugDisplay = document.getElementById('debugDataDisplay');
+            const debugContent = document.getElementById('debugContent');
+            
+            if (!debugDisplay || !debugContent) {
+                alert('デバッグ表示エリアが見つかりません');
+                return;
+            }
+            
+            try {
+                // LocalStorageから直接データを取得
+                const transportationData = localStorage.getItem('transportationData');
+                
+                let content = '<h5>LocalStorageの内容:</h5>';
+                
+                if (transportationData) {
+                    try {
+                        const data = JSON.parse(transportationData);
+                        content += '<pre style="background: white; padding: 10px; border: 1px solid #ccc; max-height: 300px; overflow: auto;">';
+                        content += JSON.stringify(data, null, 2);
+                        content += '</pre>';
+                        
+                        // 登録された人数の表示
+                        if (data.people && Array.isArray(data.people)) {
+                            content += `<p><strong>登録済み人数:</strong> ${data.people.length}人</p>`;
+                            if (data.people.length > 0) {
+                                content += '<p><strong>登録済みの人:</strong></p><ul>';
+                                data.people.forEach(person => {
+                                    content += `<li>${person.name} (最寄駅: ${person.nearestStation})</li>`;
+                                });
+                                content += '</ul>';
+                            }
+                        }
+                        
+                        // 勤務パターン数の表示
+                        if (data.patterns && Array.isArray(data.patterns)) {
+                            content += `<p><strong>登録済みパターン数:</strong> ${data.patterns.length}個</p>`;
+                        }
+                        
+                    } catch (parseError) {
+                        content += `<p style="color: red;">JSONパースエラー: ${parseError.message}</p>`;
+                        content += `<p>生データ: ${transportationData}</p>`;
+                    }
+                } else {
+                    content += '<p style="color: orange;">LocalStorageにデータが保存されていません</p>';
+                }
+                
+                // app オブジェクトの状態確認
+                content += '<h5>アプリケーションの状態:</h5>';
+                if (typeof app !== 'undefined') {
+                    content += '<p style="color: green;">✓ app オブジェクトが初期化されています</p>';
+                    if (app.data) {
+                        content += '<p style="color: green;">✓ app.data が存在します</p>';
+                        if (app.data.people) {
+                            content += `<p>app.data.people の人数: ${app.data.people.length}人</p>`;
+                        }
+                    } else {
+                        content += '<p style="color: red;">✗ app.data が存在しません</p>';
+                    }
+                } else {
+                    content += '<p style="color: red;">✗ app オブジェクトが初期化されていません</p>';
+                }
+                
+                debugContent.innerHTML = content;
+                debugDisplay.style.display = 'block';
+                
+            } catch (error) {
+                debugContent.innerHTML = `<p style="color: red;">デバッグエラー: ${error.message}</p>`;
+                debugDisplay.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

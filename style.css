@@ -1,0 +1,1423 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 95%;
+    width: 100%;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* 大きな画面では最大幅を制限 */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1200px;
+    }
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 300;
+}
+
+.tab-nav {
+    display: flex;
+    background: #fff;
+    border-bottom: 2px solid #eee;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 大きな画面では少し多めのパディング */
+@media (min-width: 768px) {
+    .tab-content {
+        padding: 25px;
+    }
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+    margin-bottom: 25px;
+    color: #333;
+    font-weight: 400;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+h3 {
+    margin: 25px 0 15px 0;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* 大きな画面では2列レイアウト */
+@media (min-width: 768px) {
+    .form-row {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .form-row .form-group {
+        flex: 1;
+    }
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+button.danger:hover {
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.calculation-result {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.calculation-result span {
+    font-weight: 500;
+    color: #555;
+}
+
+.recent-records, .locations-list, .people-list {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-top: 25px;
+}
+
+.record-item, .location-item, .person-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.record-info, .location-info, .person-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.record-date {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.record-details, .location-details, .person-details {
+    color: #666;
+    font-size: 14px;
+}
+
+.record-amount, .location-distance {
+    font-weight: 600;
+    color: #667eea;
+    font-size: 18px;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+    transform: none;
+    box-shadow: none;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.stat-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+
+.stat-item span:last-child {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.data-management {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-top: 25px;
+}
+
+.distance-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* 大きな画面では4列レイアウト */
+@media (min-width: 1024px) {
+    .distance-inputs {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.distance-input-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.distance-input-item label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.distance-input-item input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e1e5e9;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.summary-details {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+.summary-details table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.summary-details th,
+.summary-details td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-details th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #555;
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    .container {
+        margin: 0;
+        box-shadow: none;
+    }
+    
+    .tab-content {
+        padding: 20px;
+    }
+    
+    .tab-btn {
+        font-size: 12px;
+        padding: 12px 8px;
+    }
+    
+    .calculation-result {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .record-item, .location-item, .person-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .summary-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* エクセル取込関連のスタイル */
+.excel-import-section,
+.excel-mapping-section,
+.excel-preview-section,
+.work-pattern-section,
+.bulk-analysis-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.excel-import-section h3,
+.excel-mapping-section h3,
+.excel-preview-section h3,
+.work-pattern-section h3,
+.bulk-analysis-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #555;
+    font-size: 16px;
+}
+
+.mapping-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mapping-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mapping-item label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+.mapping-item input,
+.mapping-item select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.preview-btn,
+.analyze-btn,
+.bulk-analyze-btn,
+.import-btn,
+.import-registered-btn,
+.clear-btn {
+    margin-right: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.preview-btn {
+    background: #28a745;
+}
+
+.preview-btn:hover {
+    background: #218838;
+}
+
+.analyze-btn {
+    background: #17a2b8;
+}
+
+.analyze-btn:hover {
+    background: #138496;
+}
+
+.bulk-analyze-btn {
+    background: #6f42c1;
+}
+
+.bulk-analyze-btn:hover {
+    background: #5a31a3;
+}
+
+.import-btn {
+    background: #007bff;
+}
+
+.import-registered-btn {
+    background: #fd7e14;
+}
+
+.import-registered-btn:hover {
+    background: #e8620e;
+}
+
+.pattern-match-btn {
+    background: #e74c3c;
+}
+
+.pattern-match-btn:hover {
+    background: #c0392b;
+}
+
+.generate-btn {
+    background: #27ae60;
+}
+
+.generate-btn:hover {
+    background: #229954;
+}
+
+.export-btn {
+    background: #f39c12;
+}
+
+.export-btn:hover {
+    background: #d68910;
+}
+
+.name-select-btn {
+    background: #8e44ad;
+}
+
+.name-select-btn:hover {
+    background: #7d3c98;
+}
+
+.save-names-btn {
+    background: #27ae60;
+}
+
+.save-names-btn:hover {
+    background: #229954;
+}
+
+.reset-names-btn {
+    background: #e74c3c;
+}
+
+.reset-names-btn:hover {
+    background: #c0392b;
+}
+
+.import-btn:hover {
+    background: #0056b3;
+}
+
+.clear-btn {
+    background: #6c757d;
+}
+
+.clear-btn:hover {
+    background: #545b62;
+}
+
+.preview-actions {
+    margin-top: 15px;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: white;
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 800px; /* 最小幅を設定 */
+}
+
+/* テーブルコンテナに横スクロールを追加 */
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.preview-table th,
+.preview-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.preview-table th {
+    background: #f1f3f4;
+    font-weight: 600;
+}
+
+.preview-table tr:hover {
+    background: #f8f9fa;
+}
+
+.error-row {
+    background: #fff3cd !important;
+    color: #856404;
+}
+
+.success-row {
+    background: #d4edda !important;
+    color: #155724;
+}
+
+.warning-row {
+    background: #ffeaa7 !important;
+    color: #6c5ce7;
+}
+
+/* 勤務パターン分析のスタイル */
+.pattern-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.pattern-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.pattern-card h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.pattern-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.pattern-stat {
+    text-align: center;
+}
+
+.pattern-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.pattern-stat-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.pattern-details {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+.location-breakdown {
+    margin-top: 10px;
+}
+
+.location-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.location-item:last-child {
+    border-bottom: none;
+}
+
+.monthly-calendar {
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-weight: 600;
+    padding: 8px;
+    background: #f1f3f4;
+    font-size: 12px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    position: relative;
+}
+
+.calendar-day.work-day {
+    background: #e3f2fd;
+    border-color: #1976d2;
+}
+
+.calendar-day.other-month {
+    color: #ccc;
+}
+
+.work-location {
+    position: absolute;
+    bottom: 2px;
+    font-size: 8px;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+/* 一括分析のスタイル */
+.bulk-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid #6f42c1;
+}
+
+.bulk-stat {
+    text-align: center;
+}
+
+.bulk-stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #6f42c1;
+    display: block;
+}
+
+.bulk-stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.registered-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.registered-person-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #28a745;
+}
+
+.unregistered-person-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #dc3545;
+}
+
+.person-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.person-summary {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.cost-breakdown {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* 勤務パターン関連のスタイル */
+.pattern-registration-section,
+.pattern-assignment-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.pattern-registration-section h3,
+.pattern-assignment-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #555;
+}
+
+.days-selection {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+.days-selection label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+.day-checkbox {
+    width: auto !important;
+    margin: 0;
+    padding: 0;
+}
+
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 6px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.pattern-item,
+.assignment-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.pattern-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.pattern-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+}
+
+.pattern-details {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.pattern-days {
+    display: flex;
+    gap: 5px;
+    margin: 8px 0;
+}
+
+.day-badge {
+    background: #667eea;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.pattern-location {
+    background: #e8f4fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: inline-block;
+    margin-top: 5px;
+    margin-right: 10px;
+}
+
+.train-commute {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: inline-block;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.commute-none {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.commute-possible {
+    background: #d4edda;
+    color: #155724;
+}
+
+.commute-impossible {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.assignment-person {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.assignment-pattern {
+    color: #667eea;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.assignment-period {
+    color: #666;
+    font-size: 12px;
+}
+
+/* パターンマッチング関連のスタイル */
+.pattern-matching-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.pattern-match-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid #e74c3c;
+}
+
+.pattern-match-stat {
+    text-align: center;
+}
+
+.pattern-match-stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #e74c3c;
+    display: block;
+}
+
+.pattern-match-stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.pattern-match-actions {
+    margin-top: 15px;
+}
+
+.match-result-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.match-result-item.matched {
+    border-left: 4px solid #27ae60;
+}
+
+.match-result-item.partial-match {
+    border-left: 4px solid #f39c12;
+}
+
+.match-result-item.no-match {
+    border-left: 4px solid #e74c3c;
+}
+
+.match-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.match-result-person {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+}
+
+.match-result-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.match-result-status.matched {
+    background: #d4edda;
+    color: #155724;
+}
+
+.match-result-status.partial-match {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.match-result-status.no-match {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.match-details {
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.pattern-prediction {
+    background: #e8f4fd;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.prediction-days {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+}
+
+.prediction-day {
+    background: #1976d2;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.pattern-scores {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.pattern-scores div {
+    margin: 5px 0;
+}
+
+/* 名前選別機能のスタイル */
+.preview-controls {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.name-selection-mode .preview-table {
+    border: 2px solid #8e44ad;
+}
+
+.name-selection-mode .preview-table th {
+    background: #8e44ad;
+    color: white;
+}
+
+.name-edit-cell {
+    position: relative;
+}
+
+.name-edit-input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.name-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    max-height: 120px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.name-suggestion {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.name-suggestion:hover {
+    background: #f8f9fa;
+}
+
+.name-suggestion:last-child {
+    border-bottom: none;
+}
+
+.name-modified {
+    background: #fff3cd !important;
+    border-left: 4px solid #ffc107 !important;
+}
+
+.name-matched {
+    background: #d4edda !important;
+    border-left: 4px solid #28a745 !important;
+}
+
+.name-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.name-stat {
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.stat-total {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.stat-modified {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stat-matched {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stat-unmatched {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* モーダル関連のスタイル */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    padding: 0;
+    border-radius: 8px;
+    max-width: 90%;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 大きな画面では最大幅を制限 */
+@media (min-width: 1024px) {
+    .modal-content {
+        max-width: 800px;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.close-btn:hover {
+    color: #333;
+    background: #e9ecef;
+    border-radius: 50%;
+    transform: none;
+    box-shadow: none;
+}
+
+.modal form {
+    padding: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.save-btn {
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.save-btn:hover {
+    background: #218838;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+.edit-btn {
+    background: #17a2b8;
+    color: white;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+.edit-btn:hover {
+    background: #138496;
+    transform: none;
+    box-shadow: none;
+}
+
+.person-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.pattern-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* 職種選択のスタイル */
+.job-types-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 5px;
+}
+
+/* 大きな画面では2列レイアウト */
+@media (min-width: 768px) {
+    .job-types-selection {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.job-types-selection label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.job-type-checkbox,
+.edit-job-type-checkbox {
+    width: auto !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* 無効化されたフィールドのスタイル */
+select:disabled {
+    background-color: #f0f0f0;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+select:disabled option {
+    color: #666;
+}
+
+/* 人ごとのフィルタリング機能のスタイル */
+.person-filter-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border-left: 4px solid #28a745;
+}
+
+.person-filter-section h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-item label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.filter-btn:hover {
+    background: #218838;
+}
+
+.reset-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.reset-btn:hover {
+    background: #545b62;
+}
+
