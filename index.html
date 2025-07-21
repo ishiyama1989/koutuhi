@@ -13,16 +13,16 @@
         </header>
 
         <nav class="tab-nav">
-            <button class="tab-btn active" onclick="showTab('people', this)">人の登録</button>
+            <button class="tab-btn active" onclick="showTab('people', this)">職員登録</button>
             <button class="tab-btn" onclick="showTab('patterns', this)">勤務パターン</button>
             <button class="tab-btn" onclick="showTab('excel', this)">エクセル取込</button>
             <button class="tab-btn" onclick="showTab('summary', this)">月次集計</button>
             <button class="tab-btn" onclick="showTab('settings', this)">設定</button>
         </nav>
 
-        <!-- 人の登録タブ -->
+        <!-- 職員登録タブ -->
         <div id="people" class="tab-content active">
-            <h2>人の登録</h2>
+            <h2>職員登録</h2>
             <form id="personForm">
                 <div class="form-group">
                     <label for="personName">氏名:</label>
@@ -116,15 +116,15 @@
             </form>
 
             <div class="people-list">
-                <h3>登録済みの人</h3>
+                <h3>登録済みの職員</h3>
                 <div id="peopleList"></div>
             </div>
 
-            <!-- 人の編集モーダル -->
+            <!-- 職員編集モーダル -->
             <div id="editPersonModal" class="modal" style="display: none;">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3>人の情報を編集</h3>
+                        <h3>職員情報を編集</h3>
                         <button class="close-btn" onclick="closeEditPersonModal()">&times;</button>
                     </div>
                     <form id="editPersonForm">
@@ -343,6 +343,11 @@
             <div class="excel-import-section">
                 <h3>1. エクセルファイルの選択</h3>
                 <div class="form-group">
+                    <label for="targetMonth">対象月:</label>
+                    <input type="month" id="targetMonth" required>
+                </div>
+                
+                <div class="form-group">
                     <label for="excelFile">勤務表ファイル (.xlsx, .xls):</label>
                     <input type="file" id="excelFile" accept=".xlsx,.xls" />
                 </div>
@@ -361,24 +366,24 @@
                     <div class="mapping-item">
                         <label for="nameColumn">氏名列:</label>
                         <select id="nameColumn">
-                            <option value="">選択してください</option>
+                            <option value="1" selected>B列 (氏名)</option>
                         </select>
                     </div>
                     <div class="mapping-item">
                         <label for="dateStartColumn">日付開始列:</label>
                         <select id="dateStartColumn">
-                            <option value="">選択してください</option>
+                            <option value="2" selected>C列 (日付開始)</option>
                         </select>
                     </div>
                     <div class="mapping-item">
                         <label for="dateEndColumn">日付終了列:</label>
                         <select id="dateEndColumn">
-                            <option value="">選択してください</option>
+                            <option value="0" selected>A列 (日付終了)</option>
                         </select>
                     </div>
                     <div class="mapping-item">
                         <label for="startRow">データ開始行:</label>
-                        <input type="number" id="startRow" min="1" value="2" />
+                        <input type="number" id="startRow" min="1" value="1" />
                     </div>
                 </div>
                 
@@ -388,30 +393,22 @@
             <div class="excel-preview-section" id="previewSection" style="display: none;">
                 <h3>3. データプレビュー・名前選別</h3>
                 <div class="preview-controls">
-                    <button onclick="toggleNameSelection()" class="name-select-btn">名前選別モード</button>
-                    <button onclick="saveNameSelections()" class="save-names-btn" style="display: none;">選別結果を保存</button>
-                    <button onclick="resetNameSelections()" class="reset-names-btn" style="display: none;">選別リセット</button>
+                    <div class="individual-cost-view">
+                        <label for="personSelect">職員を選択:</label>
+                        <select id="personSelect" onchange="showPersonTransportCost()">
+                            <option value="">全員表示</option>
+                        </select>
+                        <button onclick="resetPersonView()" class="reset-btn">リセット</button>
+                    </div>
+                    <div id="personCostSummary" class="cost-summary" style="display: none;"></div>
                 </div>
                 <div id="previewData"></div>
                 <div class="preview-actions">
-                    <button onclick="analyzeWorkPatterns()" class="analyze-btn">勤務パターン分析</button>
                     <button onclick="bulkAnalyzeRegistered()" class="bulk-analyze-btn">登録済み一括分析</button>
-                    <button onclick="matchWithPatterns()" class="pattern-match-btn">パターン照合</button>
-                    <button onclick="importExcelData()" class="import-btn">取込実行</button>
                     <button onclick="clearPreview()" class="clear-btn">クリア</button>
                 </div>
             </div>
 
-            <div class="pattern-matching-section" id="patternMatchingSection" style="display: none;">
-                <h3>5. パターン照合結果</h3>
-                <div class="pattern-match-summary" id="patternMatchSummary"></div>
-                <div id="patternMatchData"></div>
-                <div class="pattern-match-actions">
-                    <button onclick="generatePatternRecords()" class="generate-btn">パターン適用で記録生成</button>
-                    <button onclick="exportPatternAnalysis()" class="export-btn">照合結果出力</button>
-                    <button onclick="exportSummaryCSV()" class="export-btn">通勤費集計エクスポート</button>
-                </div>
-            </div>
 
             <div class="bulk-analysis-section" id="bulkAnalysisSection" style="display: none;">
                 <h3>6. 登録済み人員一括分析</h3>

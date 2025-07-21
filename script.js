@@ -124,12 +124,34 @@ class TransportationApp {
         document.getElementById('editTrainCommute').addEventListener('change', (e) => {
             this.handleEditTrainCommuteChange();
         });
+        
+        // 最寄駅距離の自動連動機能
+        document.getElementById('nearestStationDistance').addEventListener('input', (e) => {
+            this.autoFillStationDistance();
+        });
+        document.getElementById('nearestStation').addEventListener('change', (e) => {
+            this.autoFillStationDistance();
+        });
+        
+        // 編集モーダルでの最寄駅距離の自動連動機能
+        document.getElementById('editNearestStationDistance').addEventListener('input', (e) => {
+            this.autoFillEditStationDistance();
+        });
+        document.getElementById('editNearestStation').addEventListener('change', (e) => {
+            this.autoFillEditStationDistance();
+        });
     }
 
     // デフォルト日付設定
     setDefaultDate() {
         const currentMonth = new Date().toISOString().slice(0, 7);
         document.getElementById('summaryMonth').value = currentMonth;
+        
+        // エクセル取込の対象月もデフォルト設定
+        const targetMonthField = document.getElementById('targetMonth');
+        if (targetMonthField) {
+            targetMonthField.value = currentMonth;
+        }
     }
 
     // 設定を読み込み
@@ -327,12 +349,8 @@ class TransportationApp {
         const trainCommute = document.getElementById('trainCommute').value;
         const tripType = document.getElementById('tripType');
         
-        if (trainCommute === 'possible') {
-            tripType.value = 'none';
-            tripType.disabled = true;
-        } else {
-            tripType.disabled = false;
-        }
+        // 電車通勤の値に関わらず、通勤費は常に選択可能にする
+        tripType.disabled = false;
     }
     
     // 編集モーダルの電車通勤選択時の処理
@@ -340,11 +358,59 @@ class TransportationApp {
         const trainCommute = document.getElementById('editTrainCommute').value;
         const tripType = document.getElementById('editTripType');
         
-        if (trainCommute === 'possible') {
-            tripType.value = 'none';
-            tripType.disabled = true;
-        } else {
-            tripType.disabled = false;
+        // 電車通勤の値に関わらず、通勤費は常に選択可能にする
+        tripType.disabled = false;
+    }
+    
+    // 最寄駅距離の自動連動（新規登録）
+    autoFillStationDistance() {
+        const nearestStation = document.getElementById('nearestStation').value;
+        const distance = document.getElementById('nearestStationDistance').value;
+        
+        if (!nearestStation || !distance) return;
+        
+        // 駅名と距離入力フィールドのマッピング
+        const stationMapping = {
+            '大月駅': 'distanceOtsuki',
+            '都留文科大学前駅': 'distanceTsuru',
+            '下吉田駅': 'distanceShimoyoshida',
+            '富士山駅': 'distanceFujisan',
+            '富士急ハイランド駅': 'distanceHighland',
+            '河口湖駅': 'distanceKawaguchiko'
+        };
+        
+        const fieldId = stationMapping[nearestStation];
+        if (fieldId) {
+            const targetField = document.getElementById(fieldId);
+            if (targetField) {
+                targetField.value = distance;
+            }
+        }
+    }
+    
+    // 最寄駅距離の自動連動（編集モーダル）
+    autoFillEditStationDistance() {
+        const nearestStation = document.getElementById('editNearestStation').value;
+        const distance = document.getElementById('editNearestStationDistance').value;
+        
+        if (!nearestStation || !distance) return;
+        
+        // 駅名と距離入力フィールドのマッピング（編集用）
+        const stationMapping = {
+            '大月駅': 'editDistanceOtsuki',
+            '都留文科大学前駅': 'editDistanceTsuru',
+            '下吉田駅': 'editDistanceShimoyoshida',
+            '富士山駅': 'editDistanceFujisan',
+            '富士急ハイランド駅': 'editDistanceHighland',
+            '河口湖駅': 'editDistanceKawaguchiko'
+        };
+        
+        const fieldId = stationMapping[nearestStation];
+        if (fieldId) {
+            const targetField = document.getElementById(fieldId);
+            if (targetField) {
+                targetField.value = distance;
+            }
         }
     }
 
@@ -1006,6 +1072,15 @@ function previewExcelData() {
     
     // 以降、currentAppを使用
     console.log('アプリオブジェクト取得成功:', currentApp);
+    
+    // 対象月の確認
+    const targetMonth = document.getElementById('targetMonth').value;
+    if (!targetMonth) {
+        alert('対象月を選択してください');
+        return;
+    }
+    
+    console.log('対象月:', targetMonth);
     
     // 必要な要素の存在確認と値の確認
     const requiredElements = ['nameColumn', 'dateStartColumn', 'startRow', 'previewData'];
@@ -1775,6 +1850,13 @@ function displayPreview(data) {
         container.innerHTML = '<div class="no-data">プレビューするデータがありません</div>';
         return;
     }
+    
+    // 職員選択ドロップダウンを更新
+    updatePersonSelectOptions(data);
+
+    // 対象月の情報を取得
+    const targetMonth = document.getElementById('targetMonth').value;
+    const monthDisplay = targetMonth ? new Date(targetMonth + '-01').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' }) : '未選択';
 
     // 統計情報を追加
     const registeredCount = data.filter(item => item.status === 'OK').length;
@@ -1838,6 +1920,9 @@ function displayPreview(data) {
     
     const statsHtml = `
         <div class="preview-stats" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <div style="margin-bottom: 8px;">
+                <strong>対象月:</strong> ${monthDisplay}
+            </div>
             <div style="margin-bottom: 8px;">
                 <strong>プレビュー統計:</strong> 
                 総件数: ${data.length}件 | 
@@ -2023,34 +2108,6 @@ function resetPersonFilter() {
 }
 
 // エクセルデータの取込実行
-function importExcelData() {
-    if (!app.previewData || app.previewData.length === 0) {
-        app.showMessage('プレビューデータがありません', 'error');
-        return;
-    }
-
-    let importCount = 0;
-    let skipCount = 0;
-
-    app.previewData.forEach(item => {
-        if (item.status === 'OK' && item.person.distances[item.location]) {
-            const distance = item.person.distances[item.location];
-            const totalDistance = distance * 2; // 往復固定
-            const amount = Math.round(totalDistance * app.data.settings.unitRate);
-
-            // Data processing for summary (records removed)
-            importCount++;
-        } else {
-            skipCount++;
-        }
-    });
-
-    app.saveData();
-    // updateRecentRecords() removed
-    
-    app.showMessage(`${importCount}件を取込、${skipCount}件をスキップしました`, 'success');
-    clearPreview();
-}
 
 // プレビューのクリア
 function clearPreview() {
@@ -2063,211 +2120,6 @@ function clearPreview() {
     app.previewData = null;
 }
 
-// 勤務パターン分析
-function analyzeWorkPatterns() {
-    if (!app.previewData || app.previewData.length === 0) {
-        app.showMessage('プレビューデータがありません', 'error');
-        return;
-    }
-
-    // 人ごとにデータをグループ化
-    const peopleData = {};
-    app.previewData.forEach(item => {
-        if (!peopleData[item.name]) {
-            peopleData[item.name] = {
-                name: item.name,
-                status: item.status,
-                person: item.person,
-                workDays: [],
-                locations: {},
-                totalDays: 0
-            };
-        }
-        
-        peopleData[item.name].workDays.push({
-            date: item.date,
-            location: item.location,
-            originalValue: item.originalValue // 元の勤務名を保存
-        });
-        
-        if (!peopleData[item.name].locations[item.location]) {
-            peopleData[item.name].locations[item.location] = 0;
-        }
-        peopleData[item.name].locations[item.location]++;
-        peopleData[item.name].totalDays++;
-    });
-
-    displayWorkPatterns(peopleData);
-}
-
-// 勤務パターンの表示
-function displayWorkPatterns(peopleData) {
-    const container = document.getElementById('workPatternData');
-    
-    if (Object.keys(peopleData).length === 0) {
-        container.innerHTML = '<div class="no-data">分析するデータがありません</div>';
-        return;
-    }
-
-    // 各人の勤務パターンカードを作成
-    const patternCards = Object.values(peopleData).map(personData => {
-        const totalDays = personData.totalDays;
-        const locationCount = Object.keys(personData.locations).length;
-        const mostFrequentLocation = Object.entries(personData.locations)
-            .sort(([,a], [,b]) => b - a)[0];
-        
-        // 月間カレンダーを生成
-        const calendar = generateMonthlyCalendar(personData.workDays);
-        
-        // 勤務可能性判定
-        const canWork = personData.status === 'OK';
-        const statusColor = canWork ? '#28a745' : '#dc3545';
-        
-        // 予想通勤費計算
-        let totalExpectedCost = 0;
-        if (canWork && personData.person) {
-            Object.entries(personData.locations).forEach(([location, count]) => {
-                console.log('勤務パターン検索 - 人:', personData.name, '場所:', location, '回数:', count);
-                
-                // 元の勤務名を取得
-                const workDaysForLocation = personData.workDays.filter(day => day.location === location);
-                const originalValue = workDaysForLocation.length > 0 ? workDaysForLocation[0].originalValue : null;
-                
-                // 勤務パターンを検索
-                const workPattern = findWorkPattern(location, originalValue);
-                
-                const cost = calculateTransportationCost(personData.person, location, workPattern);
-                totalExpectedCost += count * cost;
-            });
-        }
-
-        return `
-            <div class="pattern-card">
-                <h4>${personData.name} <span style="color: ${statusColor};">(${personData.status})</span></h4>
-                
-                <div class="pattern-stats">
-                    <div class="pattern-stat">
-                        <div class="pattern-stat-value">${totalDays}</div>
-                        <div class="pattern-stat-label">勤務日数</div>
-                    </div>
-                    <div class="pattern-stat">
-                        <div class="pattern-stat-value">${locationCount}</div>
-                        <div class="pattern-stat-label">勤務場所</div>
-                    </div>
-                    <div class="pattern-stat">
-                        <div class="pattern-stat-value">${totalExpectedCost.toLocaleString()}</div>
-                        <div class="pattern-stat-label">予想通勤費(円)</div>
-                    </div>
-                </div>
-
-                <div class="pattern-details">
-                    <strong>最多勤務場所:</strong> ${mostFrequentLocation[0]} (${mostFrequentLocation[1]}日)
-                </div>
-
-                <div class="location-breakdown">
-                    <strong>勤務場所別内訳:</strong>
-                    ${Object.entries(personData.locations).map(([location, count]) => {
-                        const distance = canWork && personData.person ? personData.person.distances[location] : 0;
-                        const cost = distance ? count * distance * 2 * app.data.settings.unitRate : 0;
-                        return `
-                            <div class="location-item">
-                                <span>${location}</span>
-                                <span>${count}日 ${cost > 0 ? `(${cost.toLocaleString()}円)` : ''}</span>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-
-                ${calendar}
-            </div>
-        `;
-    }).join('');
-
-    container.innerHTML = `
-        <div class="pattern-summary">
-            ${patternCards}
-        </div>
-    `;
-
-    document.getElementById('workPatternSection').style.display = 'block';
-    app.showMessage(`${Object.keys(peopleData).length}人の勤務パターンを分析しました`, 'success');
-}
-
-// 月間カレンダー生成
-function generateMonthlyCalendar(workDays) {
-    if (workDays.length === 0) return '';
-
-    // 勤務日の最初の月を取得
-    const firstDate = new Date(workDays[0].date);
-    const year = firstDate.getFullYear();
-    const month = firstDate.getMonth();
-
-    // 月の1日と最終日を取得
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    
-    // 月の最初の週の開始日（日曜日）
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
-    // 勤務日をマップに変換
-    const workDayMap = {};
-    workDays.forEach(workDay => {
-        workDayMap[workDay.date] = workDay.location;
-    });
-
-    // カレンダーの日付を生成
-    const calendarDays = [];
-    const currentDate = new Date(startDate);
-    
-    for (let week = 0; week < 6; week++) {
-        for (let day = 0; day < 7; day++) {
-            const dateStr = currentDate.toISOString().split('T')[0];
-            const isCurrentMonth = currentDate.getMonth() === month;
-            const isWorkDay = workDayMap[dateStr];
-            
-            calendarDays.push(`
-                <div class="calendar-day ${isCurrentMonth ? '' : 'other-month'} ${isWorkDay ? 'work-day' : ''}">
-                    <span>${currentDate.getDate()}</span>
-                    ${isWorkDay ? `<span class="work-location">${getLocationShort(isWorkDay)}</span>` : ''}
-                </div>
-            `);
-            
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-    }
-
-    return `
-        <div class="monthly-calendar">
-            <h5>${year}年${month + 1}月 勤務カレンダー</h5>
-            <div class="calendar-header">
-                <div class="calendar-day-header">日</div>
-                <div class="calendar-day-header">月</div>
-                <div class="calendar-day-header">火</div>
-                <div class="calendar-day-header">水</div>
-                <div class="calendar-day-header">木</div>
-                <div class="calendar-day-header">金</div>
-                <div class="calendar-day-header">土</div>
-            </div>
-            <div class="calendar-grid">
-                ${calendarDays.join('')}
-            </div>
-        </div>
-    `;
-}
-
-// 場所名を短縮表示
-function getLocationShort(location) {
-    const shortNames = {
-        '大月駅': '大月',
-        '都留文科大学前駅': '都留',
-        '下吉田駅': '下吉',
-        '富士山駅': '富士',
-        'ハイランド駅': 'HL',
-        '河口湖駅': '河口'
-    };
-    return shortNames[location] || location.substring(0, 2);
-}
 
 // 登録済み人員の一括分析
 function bulkAnalyzeRegistered() {
@@ -2649,312 +2501,165 @@ TransportationApp.prototype.deletePattern = function(id) {
 
 
 // パターンマッチング機能
-function matchWithPatterns() {
-    if (!app.previewData || app.previewData.length === 0) {
-        app.showMessage('プレビューデータがありません', 'error');
+
+// 個人別交通費表示機能
+function showPersonTransportCost() {
+    const selectedPerson = document.getElementById('personSelect').value;
+    
+    if (!selectedPerson) {
+        // 全員表示に戻す
+        resetPersonView();
         return;
     }
-
-    const results = [];
     
-    // 各人についてパターンマッチングを実行
-    const peopleInData = [...new Set(app.previewData.map(item => item.name))];
-    
-    peopleInData.forEach(personName => {
-        const person = app.data.people.find(p => p.name === personName);
-        if (!person) {
-            results.push({
-                personName,
-                person: null,
-                status: 'no-registration',
-                message: '人員登録なし',
-                actualDays: [],
-                patterns: [],
-                matchScore: 0
-            });
-            return;
-        }
-
-        const personData = app.previewData.filter(item => item.name === personName);
-        const actualDays = personData.map(item => {
-            const date = new Date(item.date);
-            return {
-                date: item.date,
-                dayOfWeek: date.getDay(),
-                location: item.location,
-                originalPattern: item.originalCell || ''
-            };
-        });
-
-        // 登録済みの全パターンと照合
-        const patternScores = [];
-        
-        app.data.patterns.forEach(pattern => {
-            const score = calculatePatternMatch(actualDays, pattern);
-            patternScores.push({
-                pattern,
-                score
-            });
-        });
-
-        // 最高スコアのパターンを選択
-        const bestMatch = patternScores.reduce((best, current) => 
-            current.score > best.score ? current : best, 
-            { pattern: null, score: 0 }
-        );
-
-        const status = bestMatch.score >= 0.8 ? 'matched' : 
-                      bestMatch.score >= 0.5 ? 'partial-match' : 'no-match';
-
-        results.push({
-            personName,
-            person,
-            status,
-            message: getMatchMessage(status, bestMatch.score),
-            actualDays,
-            patterns: patternScores.sort((a, b) => b.score - a.score),
-            matchScore: bestMatch.score,
-            bestPattern: bestMatch.pattern
-        });
-    });
-
-    displayPatternMatchResults(results);
+    displayPersonCostDetails(selectedPerson);
 }
 
-// パターンマッチング計算
-function calculatePatternMatch(actualDays, pattern) {
-    if (actualDays.length === 0) return 0;
+function displayPersonCostDetails(personName) {
+    const data = app.previewData;
+    const personData = data.filter(item => item.name === personName);
     
-    let matchCount = 0;
-    
-    actualDays.forEach(day => {
-        let dayScore = 0;
-        
-        // 1. パターン名の完全一致チェック（最優先）
-        if (day.originalPattern === pattern.name) {
-            dayScore = 1.0;
-        }
-        // 2. パターン名の部分一致チェック
-        else if (day.originalPattern.includes(pattern.name) || pattern.name.includes(day.originalPattern)) {
-            dayScore = 0.8;
-        }
-        // 3. 出勤場所の一致チェック
-        else if (day.location === pattern.workLocation) {
-            dayScore = 0.6;
-        }
-        // 4. 出勤場所の部分一致チェック
-        else if (day.location && pattern.workLocation && 
-                 (day.location.includes(pattern.workLocation) || pattern.workLocation.includes(day.location))) {
-            dayScore = 0.4;
-        }
-        
-        matchCount += dayScore;
-    });
-    
-    return matchCount / actualDays.length;
-}
-
-
-// マッチング結果のメッセージ生成
-function getMatchMessage(status, score) {
-    switch (status) {
-        case 'matched':
-            return `高い一致度 (${Math.round(score * 100)}%)`;
-        case 'partial-match':
-            return `部分的一致 (${Math.round(score * 100)}%)`;
-        case 'no-match':
-            return `パターン不一致 (${Math.round(score * 100)}%)`;
-        default:
-            return '照合不可';
+    if (personData.length === 0) {
+        resetPersonView();
+        return;
     }
+    
+    // 個人の勤務データをプレビューに表示
+    displayPreview(personData);
+    
+    // 交通費集計を計算・表示
+    calculatePersonTransportCost(personName, personData);
 }
 
-// パターンマッチング結果の表示
-function displayPatternMatchResults(results) {
-    const container = document.getElementById('patternMatchData');
-    const summaryContainer = document.getElementById('patternMatchSummary');
-
-    // 統計計算
-    const matched = results.filter(r => r.status === 'matched').length;
-    const partialMatch = results.filter(r => r.status === 'partial-match').length;
-    const noMatch = results.filter(r => r.status === 'no-match').length;
-    const noPattern = results.filter(r => r.status === 'no-pattern').length;
-    const noRegistration = results.filter(r => r.status === 'no-registration').length;
-
-    // 統計表示
-    summaryContainer.innerHTML = `
-        <div class="pattern-match-stat">
-            <span class="pattern-match-stat-value">${matched}</span>
-            <div class="pattern-match-stat-label">完全一致</div>
-        </div>
-        <div class="pattern-match-stat">
-            <span class="pattern-match-stat-value">${partialMatch}</span>
-            <div class="pattern-match-stat-label">部分一致</div>
-        </div>
-        <div class="pattern-match-stat">
-            <span class="pattern-match-stat-value">${noMatch}</span>
-            <div class="pattern-match-stat-label">不一致</div>
-        </div>
-        <div class="pattern-match-stat">
-            <span class="pattern-match-stat-value">${noPattern + noRegistration}</span>
-            <div class="pattern-match-stat-label">パターンなし</div>
-        </div>
-    `;
-
-    // 詳細結果表示
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+function calculatePersonTransportCost(personName, personData) {
+    const summaryDiv = document.getElementById('personCostSummary');
+    const person = app.data.people.find(p => p.name === personName);
     
-    container.innerHTML = results.map(result => {
-        const statusClass = result.status;
-        const statusText = result.message;
-
-        let detailsHtml = '';
-        if (result.actualDays.length > 0) {
-            detailsHtml += `<div class="match-details">実際の勤務: ${result.actualDays.length}日</div>`;
-            detailsHtml += `<div class="match-details">勤務日: ${result.actualDays.map(d => 
-                `${d.date}(${dayNames[d.dayOfWeek]})`
-            ).join(', ')}</div>`;
-        }
-
-        if (result.bestPattern) {
-            const trainCommuteText = result.bestPattern.trainCommute ? '可能' : '不可';
-            detailsHtml += `
-                <div class="pattern-prediction">
-                    <strong>最適パターン: ${result.bestPattern.name}</strong>
-                    <div>出勤場所: ${result.bestPattern.workLocation}</div>
-                    <div>電車通勤: ${trainCommuteText}</div>
-                </div>
-            `;
-        }
-
-        if (result.patterns && result.patterns.length > 0) {
-            detailsHtml += `
-                <div class="pattern-scores">
-                    <strong>パターン適合度:</strong>
-                    ${result.patterns.slice(0, 3).map(p => 
-                        `<div>${p.pattern.name}: ${Math.round(p.score * 100)}%</div>`
-                    ).join('')}
-                </div>
-            `;
-        }
-
-        return `
-            <div class="match-result-item ${statusClass}">
-                <div class="match-result-header">
-                    <div class="match-result-person">${result.personName}</div>
-                    <div class="match-result-status ${statusClass}">${statusText}</div>
-                </div>
-                ${detailsHtml}
+    if (!person) {
+        summaryDiv.innerHTML = `
+            <div class="cost-summary-content">
+                <h4>${personName}の交通費集計</h4>
+                <p class="error">この職員は登録されていません</p>
             </div>
         `;
-    }).join('');
-
-    app.patternMatchResults = results;
-    document.getElementById('patternMatchingSection').style.display = 'block';
-    app.showMessage(`${results.length}名のパターン照合が完了しました`, 'success');
-}
-
-// パターン適用で記録生成
-function generatePatternRecords() {
-    if (!app.patternMatchResults) {
-        app.showMessage('パターン照合結果がありません', 'error');
+        summaryDiv.style.display = 'block';
         return;
     }
-
-    let generatedCount = 0;
-    const errors = [];
-
-    app.patternMatchResults.forEach(result => {
-        if (result.status === 'matched' && result.person && result.bestPattern) {
-            result.actualDays.forEach(day => {
-                // 出勤記録機能が削除されたため、記録生成は無効
-                generatedCount++; // ダミーカウント
-            });
+    
+    const unitRate = app.data.settings.unitRate || 10;
+    let totalCost = 0;
+    let workDays = 0;
+    let costDetails = [];
+    
+    personData.forEach(item => {
+        if (item.status === 'OK' && item.location) {
+            workDays++;
+            
+            // 勤務場所に基づいて距離を計算
+            let distance = 0;
+            const pattern = app.data.patterns.find(p => p.name === item.originalCell);
+            
+            if (pattern) {
+                // 勤務パターンの出勤場所から距離を取得
+                switch(pattern.workLocation) {
+                    case '大月駅':
+                        distance = person.distances?.distanceOtsuki || 0;
+                        break;
+                    case '都留文科大学前駅':
+                        distance = person.distances?.distanceTsuru || 0;
+                        break;
+                    case '下吉田駅':
+                        distance = person.distances?.distanceShimoyoshida || 0;
+                        break;
+                    case '富士山駅':
+                        distance = person.distances?.distanceFujisan || 0;
+                        break;
+                    case 'ハイランド駅':
+                        distance = person.distances?.distanceHighland || 0;
+                        break;
+                    case '河口湖駅':
+                        distance = person.distances?.distanceKawaguchiko || 0;
+                        break;
+                    default:
+                        distance = person.nearestStationDistance || 0;
+                }
+                
+                // 通勤費計算（往復・片道・なし）
+                let dailyCost = 0;
+                if (pattern.tripType === 'roundtrip') {
+                    dailyCost = distance * 2 * unitRate;
+                } else if (pattern.tripType === 'oneway') {
+                    dailyCost = distance * unitRate;
+                }
+                
+                totalCost += dailyCost;
+                costDetails.push({
+                    date: item.date,
+                    pattern: item.originalCell,
+                    location: pattern.workLocation,
+                    distance: distance,
+                    tripType: pattern.tripType,
+                    cost: dailyCost
+                });
+            }
         }
     });
+    
+    summaryDiv.innerHTML = `
+        <div class="cost-summary-content">
+            <h4>${personName}の交通費集計</h4>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-label">出勤日数:</span>
+                    <span>${workDays}日</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">合計交通費:</span>
+                    <span class="cost-amount">${totalCost.toLocaleString()}円</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">単価:</span>
+                    <span>${unitRate}円/km</span>
+                </div>
+            </div>
+        </div>
+    `;
+    summaryDiv.style.display = 'block';
+}
 
-    if (generatedCount > 0) {
-        app.saveData();
-        // updateRecentRecords() removed
-        app.showMessage(`${generatedCount}件の記録を生成しました`, 'success');
-        
-        if (errors.length > 0) {
-            console.warn('生成エラー:', errors);
-            app.showMessage(`${errors.length}件のエラーがありました（コンソール確認）`, 'warning');
-        }
-    } else {
-        app.showMessage('生成可能な記録がありませんでした', 'warning');
+function resetPersonView() {
+    document.getElementById('personSelect').value = '';
+    document.getElementById('personCostSummary').style.display = 'none';
+    
+    // 全データを再表示
+    if (app.previewData && app.previewData.length > 0) {
+        displayPreview(app.previewData);
     }
 }
 
-// 照合結果のCSV出力
-function exportPatternAnalysis() {
-    if (!app.patternMatchResults) {
-        app.showMessage('パターン照合結果がありません', 'error');
-        return;
+function updatePersonSelectOptions(data) {
+    const personSelect = document.getElementById('personSelect');
+    if (!personSelect) return;
+    
+    // 現在の選択値を保持
+    const currentValue = personSelect.value;
+    
+    // 重複を除いた職員名リストを作成
+    const uniqueNames = [...new Set(data.map(item => item.name))].sort();
+    
+    // オプションを再構築
+    personSelect.innerHTML = '<option value="">全員表示</option>';
+    uniqueNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        personSelect.appendChild(option);
+    });
+    
+    // 以前の選択値を復元
+    if (currentValue && uniqueNames.includes(currentValue)) {
+        personSelect.value = currentValue;
     }
-
-    const headers = ['氏名', 'ステータス', '一致度', '実勤務日数', 'パターン名', '出勤場所', '電車通勤'];
-    
-    const rows = app.patternMatchResults.map(result => [
-        result.personName,
-        result.message,
-        `${Math.round(result.matchScore * 100)}%`,
-        result.actualDays.length,
-        result.bestPattern ? result.bestPattern.name : '',
-        result.bestPattern ? result.bestPattern.workLocation : '',
-        result.bestPattern ? (result.bestPattern.trainCommute ? '可能' : '不可') : ''
-    ]);
-
-    const csvContent = [headers, ...rows]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `パターン照合結果_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-
-    app.showMessage('照合結果をCSVファイルで出力しました', 'success');
-}
-
-// 名前選別機能
-function toggleNameSelection() {
-    app.nameSelectionMode = !app.nameSelectionMode;
-    
-    if (app.nameSelectionMode) {
-        enterNameSelectionMode();
-    } else {
-        exitNameSelectionMode();
-    }
-}
-
-function enterNameSelectionMode() {
-    const container = document.getElementById('previewData');
-    const previewSection = document.getElementById('previewSection');
-    
-    previewSection.classList.add('name-selection-mode');
-    document.querySelector('.name-select-btn').textContent = '選別モード終了';
-    document.querySelector('.save-names-btn').style.display = 'inline-block';
-    document.querySelector('.reset-names-btn').style.display = 'inline-block';
-    
-    // 名前選別用テーブルを再生成
-    generateNameSelectionTable();
-    app.showMessage('名前選別モードが有効になりました', 'info');
-}
-
-function exitNameSelectionMode() {
-    const previewSection = document.getElementById('previewSection');
-    
-    previewSection.classList.remove('name-selection-mode');
-    document.querySelector('.name-select-btn').textContent = '名前選別モード';
-    document.querySelector('.save-names-btn').style.display = 'none';
-    document.querySelector('.reset-names-btn').style.display = 'none';
-    
-    // 通常のプレビューテーブルに戻す
-    displayPreview(app.previewData);
-    app.showMessage('名前選別モードを終了しました', 'info');
 }
 
 function generateNameSelectionTable() {
