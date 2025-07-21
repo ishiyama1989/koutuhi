@@ -405,6 +405,7 @@
                 <div id="previewData"></div>
                 <div class="preview-actions">
                     <button onclick="bulkAnalyzeRegistered()" class="bulk-analyze-btn">登録済み一括分析</button>
+                    <button onclick="saveMonthlyPreviewData()" class="save-monthly-btn">月別データ保存</button>
                     <button onclick="clearPreview()" class="clear-btn">クリア</button>
                 </div>
             </div>
@@ -420,29 +421,36 @@
         <!-- 月次集計タブ -->
         <div id="summary" class="tab-content">
             <h2>月次集計</h2>
-            <div class="form-group">
-                <label for="summaryMonth">集計月:</label>
-                <input type="month" id="summaryMonth">
-                <button onclick="generateSummary()">集計表示</button>
+            
+            <div class="summary-controls">
+                <div class="form-group">
+                    <label for="summaryMonth">集計月:</label>
+                    <input type="month" id="summaryMonth">
+                    <button onclick="generateSummary()" class="btn-primary">集計表示</button>
+                </div>
             </div>
             
             <div id="summaryResult">
                 <div class="summary-stats">
                     <div class="stat-item">
-                        <span class="stat-label">出勤日数:</span>
+                        <span class="stat-label">総出勤日数</span>
                         <span id="totalDays">-</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">総距離:</span>
-                        <span id="totalDistance">-</span> km
+                        <span class="stat-label">総移動距離</span>
+                        <span id="totalDistance">-</span> <small>km</small>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">総通勤費:</span>
-                        <span id="totalAmount">-</span> 円
+                        <span class="stat-label">総通勤費</span>
+                        <span id="totalAmount">-</span> <small>円</small>
                     </div>
                 </div>
                 
-                <button onclick="exportCSV()" id="exportBtn" style="display: none;">CSV出力</button>
+                <div class="export-section" style="text-align: center; margin: 20px 0;">
+                    <button onclick="exportCSV()" id="exportBtn" style="display: none;" class="btn-secondary">
+                        📊 CSV出力
+                    </button>
+                </div>
                 
                 <div id="summaryDetails"></div>
             </div>
@@ -467,6 +475,26 @@
                 <button onclick="document.getElementById('importFile').click()">データ読込</button>
                 <button onclick="clearAllData()" class="danger">全データ削除</button>
                 <button onclick="debugShowData()">データ確認</button>
+            </div>
+            
+            <div class="monthly-data-management">
+                <h3>月別データ管理</h3>
+                <div class="form-group">
+                    <label for="monthlyDataSelect">保存済み月データ:</label>
+                    <select id="monthlyDataSelect" onchange="loadSelectedMonthlyData()">
+                        <option value="">選択してください</option>
+                    </select>
+                    <button onclick="refreshMonthlyDataList()">更新</button>
+                </div>
+                <div class="monthly-actions">
+                    <button onclick="viewMonthlyData()" id="viewMonthlyBtn" disabled>月データ表示</button>
+                    <button onclick="exportMonthlyData()" id="exportMonthlyBtn" disabled>月データ出力</button>
+                    <button onclick="deleteMonthlyData()" id="deleteMonthlyBtn" disabled class="danger">月データ削除</button>
+                </div>
+                <div id="monthlyDataDisplay" style="display: none;">
+                    <h4>月別データ表示</h4>
+                    <div id="monthlyDataContent"></div>
+                </div>
             </div>
             
             <div id="debugDataDisplay" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;">

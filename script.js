@@ -24,6 +24,160 @@ class TransportationApp {
     saveData() {
         localStorage.setItem('transportationData', JSON.stringify(this.data));
     }
+    
+    // 月別データを保存
+    saveMonthlyData(month, data) {
+        const monthlyKey = `monthlyData_${month}`;
+        const monthlyData = {
+            month: month,
+            data: data,
+            savedAt: new Date().toISOString(),
+            totalRecords: data.length,
+            summary: this.generateMonthlySummary(data)
+        };
+        localStorage.setItem(monthlyKey, JSON.stringify(monthlyData));
+        
+        // 保存済み月リストを更新
+        this.updateSavedMonthsList(month);
+        
+        return monthlyData;
+    }
+    
+    // 月別データを読み込み
+    loadMonthlyData(month) {
+        const monthlyKey = `monthlyData_${month}`;
+        const savedData = localStorage.getItem(monthlyKey);
+        if (savedData) {
+            return JSON.parse(savedData);
+        }
+        return null;
+    }
+    
+    // 保存済み月リストを更新
+    updateSavedMonthsList(month) {
+        const savedMonthsKey = 'savedMonths';
+        let savedMonths = [];
+        
+        const existingSavedMonths = localStorage.getItem(savedMonthsKey);
+        if (existingSavedMonths) {
+            savedMonths = JSON.parse(existingSavedMonths);
+        }
+        
+        if (!savedMonths.includes(month)) {
+            savedMonths.push(month);
+            savedMonths.sort(); // 月順でソート
+            localStorage.setItem(savedMonthsKey, JSON.stringify(savedMonths));
+        }
+    }
+    
+    // 保存済み月リストを取得
+    getSavedMonthsList() {
+        const savedMonthsKey = 'savedMonths';
+        const savedMonths = localStorage.getItem(savedMonthsKey);
+        return savedMonths ? JSON.parse(savedMonths) : [];
+    }
+    
+    // 月別集計データを生成
+    generateMonthlySummary(data) {
+        const summary = {
+            totalRecords: data.length,
+            registeredCount: data.filter(item => item.status === 'OK').length,
+            unregisteredCount: data.filter(item => item.status === '未登録').length,
+            noCarCount: data.filter(item => item.status === '自家用車なし').length,
+            totalCost: 0,
+            peopleStats: {},
+            locationStats: {}
+        };
+        
+        // 人別・場所別統計
+        data.forEach(item => {
+            // 人別統計
+            if (!summary.peopleStats[item.name]) {
+                summary.peopleStats[item.name] = {
+                    workDays: 0,
+                    totalCost: 0,
+                    status: item.status
+                };
+            }
+            summary.peopleStats[item.name].workDays++;
+            
+            // 場所別統計
+            if (item.location) {
+                if (!summary.locationStats[item.location]) {
+                    summary.locationStats[item.location] = 0;
+                }
+                summary.locationStats[item.location]++;
+            }
+            
+            // 通勤費計算
+            if (item.status === 'OK' && item.person) {
+                const pattern = app.data.patterns.find(p => p.name === item.originalCell);
+                if (pattern) {
+                    let distance = 0;
+                    switch(pattern.workLocation) {
+                        case '大月駅':
+                            distance = item.person.distances?.distanceOtsuki || 0;
+                            break;
+                        case '都留文科大学前駅':
+                            distance = item.person.distances?.distanceTsuru || 0;
+                            break;
+                        case '下吉田駅':
+                            distance = item.person.distances?.distanceShimoyoshida || 0;
+                            break;
+                        case '富士山駅':
+                            distance = item.person.distances?.distanceFujisan || 0;
+                            break;
+                        case 'ハイランド駅':
+                            distance = item.person.distances?.distanceHighland || 0;
+                            break;
+                        case '河口湖駅':
+                            distance = item.person.distances?.distanceKawaguchiko || 0;
+                            break;
+                        default:
+                            distance = item.person.nearestStationDistance || 0;
+                    }
+                    
+                    let dailyCost = 0;
+                    const unitRate = app.data.settings.unitRate || 10;
+                    if (pattern.tripType === 'roundtrip') {
+                        dailyCost = distance * 2 * unitRate;
+                    } else if (pattern.tripType === 'oneway') {
+                        dailyCost = distance * unitRate;
+                    }
+                    
+                    summary.peopleStats[item.name].totalCost += dailyCost;
+                    summary.totalCost += dailyCost;
+                }
+            }
+        });
+        
+        return summary;
+    }
+    
+    // 月別データ管理の初期化
+    initializeMonthlyDataManagement() {
+        this.refreshMonthlyDataList();
+    }
+    
+    // 月別データリストを更新
+    refreshMonthlyDataList() {
+        const selectElement = document.getElementById('monthlyDataSelect');
+        if (!selectElement) return;
+        
+        const savedMonths = this.getSavedMonthsList();
+        
+        // オプションをクリア
+        selectElement.innerHTML = '<option value="">選択してください</option>';
+        
+        // 保存済み月を追加（新しい順）
+        savedMonths.reverse().forEach(month => {
+            const option = document.createElement('option');
+            option.value = month;
+            const date = new Date(month + '-01');
+            option.textContent = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+            selectElement.appendChild(option);
+        });
+    }
 
     // アプリケーション初期化
     initializeApp() {
@@ -52,6 +206,9 @@ class TransportationApp {
         document.getElementById('summaryMonth').addEventListener('change', () => {
             this.generateSummary();
         });
+        
+        // 月別データ管理の初期化
+        this.initializeMonthlyDataManagement();
 
         // 最寄駅選択による距離入力の表示切り替え
         document.getElementById('nearestStation').addEventListener('change', (e) => {
@@ -735,28 +892,148 @@ class TransportationApp {
         const month = document.getElementById('summaryMonth').value;
         if (!month) return;
 
-        // 出勤記録機能が削除されたため、集計データはなし
-        const totalDays = 0;
-        const totalDistance = 0;
-        const totalAmount = 0;
+        // 月別データを取得
+        const monthlyData = this.loadMonthlyData(month);
+        
+        if (!monthlyData || !monthlyData.data) {
+            document.getElementById('totalDays').textContent = '-';
+            document.getElementById('totalDistance').textContent = '-';
+            document.getElementById('totalAmount').textContent = '-';
+            
+            const detailsContainer = document.getElementById('summaryDetails');
+            detailsContainer.innerHTML = '<div class="no-data">選択された月のデータがありません</div>';
+            document.getElementById('exportBtn').style.display = 'none';
+            return;
+        }
 
+        // 人別通勤費集計
+        const personStats = {};
+        let totalDays = 0;
+        let totalDistance = 0;
+        let totalAmount = 0;
+
+        monthlyData.data.forEach(item => {
+            if (!personStats[item.name]) {
+                personStats[item.name] = {
+                    workDays: 0,
+                    totalCost: 0,
+                    nearestStation: '',
+                    distance: 0
+                };
+            }
+
+            personStats[item.name].workDays++;
+            totalDays++;
+
+            if (item.person && item.person.nearestStationDistance) {
+                const distance = parseFloat(item.person.nearestStationDistance);
+                personStats[item.name].distance = distance;
+                personStats[item.name].nearestStation = item.person.nearestStation;
+                
+                // 通勤費計算（往復）
+                const dailyCost = distance * 2 * (this.data.settings.unitRate || 10);
+                personStats[item.name].totalCost += dailyCost;
+                totalAmount += dailyCost;
+                totalDistance += distance * 2;
+            }
+        });
+
+        // 統計情報表示
         document.getElementById('totalDays').textContent = totalDays;
         document.getElementById('totalDistance').textContent = totalDistance.toFixed(1);
         document.getElementById('totalAmount').textContent = totalAmount.toLocaleString();
 
-        // 詳細テーブル
+        // 詳細テーブル作成
         const detailsContainer = document.getElementById('summaryDetails');
-        detailsContainer.innerHTML = '<div class="no-data">出勤記録機能が削除されたため、集計データはありません</div>';
-        document.getElementById('exportBtn').style.display = 'none';
+        let tableHTML = `
+            <h4>${month}の個人別通勤費一覧</h4>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>氏名</th>
+                        <th>出勤日数</th>
+                        <th>最寄駅</th>
+                        <th>距離(km)</th>
+                        <th>総通勤費(円)</th>
+                        <th>平均通勤費(円/日)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        Object.entries(personStats).forEach(([name, stats]) => {
+            const avgCost = stats.workDays > 0 ? Math.round(stats.totalCost / stats.workDays) : 0;
+            tableHTML += `
+                <tr>
+                    <td>${name}</td>
+                    <td>${stats.workDays}</td>
+                    <td>${stats.nearestStation}</td>
+                    <td>${stats.distance}</td>
+                    <td>${stats.totalCost.toLocaleString()}</td>
+                    <td>${avgCost.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+
+        detailsContainer.innerHTML = tableHTML;
+        document.getElementById('exportBtn').style.display = 'block';
     }
 
     // CSV出力
     exportCSV() {
         const month = document.getElementById('summaryMonth').value;
-        
-        // 出勤記録機能が削除されたため、CSV出力は使用不可
-        this.showMessage('出勤記録機能が削除されたため、CSV出力は使用できません', 'error');
-        return;
+        if (!month) return;
+
+        const monthlyData = this.loadMonthlyData(month);
+        if (!monthlyData || !monthlyData.data) {
+            this.showMessage('選択された月のデータがありません', 'error');
+            return;
+        }
+
+        // 人別通勤費集計
+        const personStats = {};
+        monthlyData.data.forEach(item => {
+            if (!personStats[item.name]) {
+                personStats[item.name] = {
+                    workDays: 0,
+                    totalCost: 0,
+                    nearestStation: '',
+                    distance: 0
+                };
+            }
+
+            personStats[item.name].workDays++;
+
+            if (item.person && item.person.nearestStationDistance) {
+                const distance = parseFloat(item.person.nearestStationDistance);
+                personStats[item.name].distance = distance;
+                personStats[item.name].nearestStation = item.person.nearestStation;
+                
+                const dailyCost = distance * 2 * (this.data.settings.unitRate || 10);
+                personStats[item.name].totalCost += dailyCost;
+            }
+        });
+
+        // CSV出力
+        let csvContent = '氏名,出勤日数,最寄駅,距離(km),総通勤費(円),平均通勤費(円/日)\n';
+        Object.entries(personStats).forEach(([name, stats]) => {
+            const avgCost = stats.workDays > 0 ? Math.round(stats.totalCost / stats.workDays) : 0;
+            csvContent += `${name},${stats.workDays},${stats.nearestStation},${stats.distance},${stats.totalCost},${avgCost}\n`;
+        });
+
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `月次集計_${month}.csv`;
+        link.click();
+
+        this.showMessage(`${month}の月次集計をCSV出力しました`, 'success');
     }
 
     // データ出力
@@ -2659,6 +2936,287 @@ function updatePersonSelectOptions(data) {
     // 以前の選択値を復元
     if (currentValue && uniqueNames.includes(currentValue)) {
         personSelect.value = currentValue;
+    }
+}
+
+// 月別データ保存関数
+function saveMonthlyPreviewData() {
+    if (!app.previewData || app.previewData.length === 0) {
+        alert('保存するプレビューデータがありません');
+        return;
+    }
+    
+    const targetMonth = document.getElementById('targetMonth').value;
+    if (!targetMonth) {
+        alert('対象月を選択してください');
+        return;
+    }
+    
+    // 既存データの確認
+    const existingData = app.loadMonthlyData(targetMonth);
+    if (existingData) {
+        if (!confirm(`${targetMonth}のデータが既に存在します。上書きしますか？`)) {
+            return;
+        }
+    }
+    
+    try {
+        const savedData = app.saveMonthlyData(targetMonth, app.previewData);
+        app.refreshMonthlyDataList();
+        
+        const monthDisplay = new Date(targetMonth + '-01').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+        app.showMessage(`${monthDisplay}のデータを保存しました（${savedData.totalRecords}件）`, 'success');
+    } catch (error) {
+        app.showMessage(`データ保存エラー: ${error.message}`, 'error');
+    }
+}
+
+// 保存済み月データリスト更新
+function refreshMonthlyDataList() {
+    app.refreshMonthlyDataList();
+}
+
+// 選択された月データの読み込み
+function loadSelectedMonthlyData() {
+    const selectElement = document.getElementById('monthlyDataSelect');
+    const selectedMonth = selectElement.value;
+    
+    // ボタンの有効/無効化
+    const viewBtn = document.getElementById('viewMonthlyBtn');
+    const exportBtn = document.getElementById('exportMonthlyBtn');
+    const deleteBtn = document.getElementById('deleteMonthlyBtn');
+    
+    if (selectedMonth) {
+        viewBtn.disabled = false;
+        exportBtn.disabled = false;
+        deleteBtn.disabled = false;
+    } else {
+        viewBtn.disabled = true;
+        exportBtn.disabled = true;
+        deleteBtn.disabled = true;
+        document.getElementById('monthlyDataDisplay').style.display = 'none';
+    }
+}
+
+// 月データ表示
+function viewMonthlyData() {
+    const selectElement = document.getElementById('monthlyDataSelect');
+    const selectedMonth = selectElement.value;
+    
+    if (!selectedMonth) {
+        alert('表示する月を選択してください');
+        return;
+    }
+    
+    const monthlyData = app.loadMonthlyData(selectedMonth);
+    if (!monthlyData) {
+        alert('データが見つかりません');
+        return;
+    }
+    
+    const monthDisplay = new Date(selectedMonth + '-01').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+    const summary = monthlyData.summary;
+    
+    let content = `
+        <div class="monthly-data-overview">
+            <div class="monthly-header">
+                <h4>📊 ${monthDisplay} データ詳細</h4>
+                <div class="save-date">保存日時: ${new Date(monthlyData.savedAt).toLocaleString('ja-JP')}</div>
+            </div>
+            
+            <div class="monthly-stats-grid">
+                <div class="monthly-stat-card total-records">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${summary.totalRecords}</div>
+                        <div class="stat-label">総記録数</div>
+                    </div>
+                </div>
+                <div class="monthly-stat-card calculated">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${summary.registeredCount}</div>
+                        <div class="stat-label">計算可能</div>
+                    </div>
+                </div>
+                <div class="monthly-stat-card unregistered">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${summary.unregisteredCount}</div>
+                        <div class="stat-label">未登録</div>
+                    </div>
+                </div>
+                <div class="monthly-stat-card no-car">
+                    <div class="stat-icon">🚌</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${summary.noCarCount}</div>
+                        <div class="stat-label">自家用車なし</div>
+                    </div>
+                </div>
+                <div class="monthly-stat-card total-cost">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-value">${summary.totalCost.toLocaleString()}</div>
+                        <div class="stat-label">総通勤費（円）</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="monthly-section">
+                <h5>👥 職員別統計</h5>
+                <div class="monthly-table-container">
+                    <table class="monthly-stats-table">
+                        <thead>
+                            <tr>
+                                <th>職員名</th>
+                                <th>出勤日数</th>
+                                <th>通勤費</th>
+                                <th>平均/日</th>
+                                <th>状態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(summary.peopleStats).map(([name, stats]) => {
+                                const avgCost = stats.workDays > 0 ? Math.round(stats.totalCost / stats.workDays) : 0;
+                                const statusClass = stats.status === 'OK' ? 'status-ok' : 'status-error';
+                                return `
+                                    <tr>
+                                        <td class="name-cell">${name}</td>
+                                        <td class="number-cell">${stats.workDays}日</td>
+                                        <td class="money-cell">${stats.totalCost.toLocaleString()}円</td>
+                                        <td class="money-cell">${avgCost.toLocaleString()}円</td>
+                                        <td class="status-cell"><span class="status-badge ${statusClass}">${stats.status}</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="monthly-section">
+                <h5>📍 勤務場所別統計</h5>
+                <div class="location-stats-grid">
+                    ${Object.entries(summary.locationStats).map(([location, count]) => `
+                        <div class="location-stat-item">
+                            <div class="location-name">${location}</div>
+                            <div class="location-count">${count}件</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('monthlyDataContent').innerHTML = content;
+    document.getElementById('monthlyDataDisplay').style.display = 'block';
+}
+
+// 月データ出力
+function exportMonthlyData() {
+    const selectElement = document.getElementById('monthlyDataSelect');
+    const selectedMonth = selectElement.value;
+    
+    if (!selectedMonth) {
+        alert('出力する月を選択してください');
+        return;
+    }
+    
+    const monthlyData = app.loadMonthlyData(selectedMonth);
+    if (!monthlyData) {
+        alert('データが見つかりません');
+        return;
+    }
+    
+    // Excel形式での出力
+    const workbook = XLSX.utils.book_new();
+    
+    // メインデータシート
+    const mainData = monthlyData.data.map(item => ({
+        '日付': item.date,
+        '氏名': item.name,
+        '勤務パターン': item.pattern || '',
+        'ステータス': item.status,
+        '最寄駅': item.person ? item.person.nearestStation : '',
+        '距離(km)': item.person ? item.person.nearestStationDistance : '',
+        '通勤費': item.calculatedCost || ''
+    }));
+    const mainSheet = XLSX.utils.json_to_sheet(mainData);
+    XLSX.utils.book_append_sheet(workbook, mainSheet, '勤務データ');
+    
+    // 集計データシート
+    const summary = monthlyData.summary;
+    const summaryData = [
+        { '項目': '対象月', '値': monthlyData.month },
+        { '項目': '総レコード数', '値': monthlyData.totalRecords },
+        { '項目': '保存日時', '値': new Date(monthlyData.savedAt).toLocaleDateString('ja-JP') },
+        { '項目': '', '値': '' },
+        { '項目': '人数統計', '値': '' },
+        { '項目': '登録済み職員数', '値': summary.peopleStats.registered },
+        { '項目': '未登録者数', '値': summary.peopleStats.unregistered },
+        { '項目': '', '値': '' },
+        { '項目': '出勤場所統計', '値': '' },
+        ...Object.entries(summary.locationStats || {}).map(([key, value]) => ({ '項目': key, '値': value })),
+        { '項目': '', '値': '' },
+        { '項目': '通勤費統計', '値': '' },
+        { '項目': '総通勤費', '値': `${summary.costStats.totalCost}円` },
+        { '項目': '平均通勤費', '値': `${summary.costStats.averageCost}円` }
+    ];
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, '月次集計');
+    
+    // 個人別集計シート
+    if (summary.personStats) {
+        const personData = Object.entries(summary.personStats).map(([name, stats]) => ({
+            '氏名': name,
+            '出勤日数': stats.workDays,
+            '総通勤費': `${stats.totalCost}円`,
+            '平均通勤費': `${stats.averageCost}円`,
+            '最寄駅': stats.nearestStation || ''
+        }));
+        const personSheet = XLSX.utils.json_to_sheet(personData);
+        XLSX.utils.book_append_sheet(workbook, personSheet, '個人別集計');
+    }
+    
+    // ファイル出力
+    const fileName = `月別データ_${selectedMonth}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    app.showMessage(`${selectedMonth}のデータを出力しました`, 'success');
+}
+
+// 月データ削除
+function deleteMonthlyData() {
+    const selectElement = document.getElementById('monthlyDataSelect');
+    const selectedMonth = selectElement.value;
+    
+    if (!selectedMonth) {
+        alert('削除する月を選択してください');
+        return;
+    }
+    
+    const monthDisplay = new Date(selectedMonth + '-01').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+    if (!confirm(`${monthDisplay}のデータを削除しますか？この操作は取り消せません。`)) {
+        return;
+    }
+    
+    try {
+        // データを削除
+        const monthlyKey = `monthlyData_${selectedMonth}`;
+        localStorage.removeItem(monthlyKey);
+        
+        // 保存済み月リストから削除
+        const savedMonths = app.getSavedMonthsList();
+        const updatedMonths = savedMonths.filter(month => month !== selectedMonth);
+        localStorage.setItem('savedMonths', JSON.stringify(updatedMonths));
+        
+        // UIを更新
+        app.refreshMonthlyDataList();
+        document.getElementById('monthlyDataDisplay').style.display = 'none';
+        
+        app.showMessage(`${monthDisplay}のデータを削除しました`, 'success');
+    } catch (error) {
+        app.showMessage(`削除エラー: ${error.message}`, 'error');
     }
 }
 
